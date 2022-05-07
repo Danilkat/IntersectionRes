@@ -2,11 +2,16 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Parabox.CSG;
+using UnityEngine.UI;
 
 public class Chopper : MonoBehaviour
 {
+    [Tooltip("Проверяет, будет запускаться скрипт при старте демки или по активации")]
+    public bool OnStart;
     public GameObject tree;
     public GameObject wound1, wound2;
+    Chopable choppable;
+    static GameObject[] instatiatedPieces = new GameObject[3];
 
     static float treeDensity = 0.68f;
 
@@ -32,6 +37,7 @@ public class Chopper : MonoBehaviour
     class Chopable
     {
         public GameObject tree;
+        Mesh initMesh;
         List<Wound> wounds = new List<Wound>();
         public Chopable(GameObject t)
         {
@@ -63,6 +69,39 @@ public class Chopper : MonoBehaviour
                }
             }
             wounds.Add(newWound);
+        }
+        public void TwoWoundCut(GameObject wound1, GameObject wound2) {
+            Wound newWound = new Wound(wound2);
+            Wound wound = new Wound(wound1);
+
+            bool intsc = false;
+            Vector3 intscPoint1 = wound.quad.Intersection(newWound.quad, true, ref intsc);
+            if (intsc)
+            {
+
+                Vector3 intscPoint2 = wound.quad.Intersection(newWound.quad, false, ref intsc);
+                if (intsc) Cut(newWound, wound, intscPoint1, intscPoint2);
+                else
+                {
+                    tree.GetComponent<MeshFilter>().mesh = initMesh;
+                    tree.GetComponent<MeshRenderer>().enabled = true;
+                }
+            }
+            else
+            {
+                intscPoint1 = newWound.quad.Intersection(wound.quad, true, ref intsc);
+                if (intsc)
+                {
+
+                    Vector3 intscPoint2 = newWound.quad.Intersection(wound.quad, false, ref intsc);
+                    if (intsc) Cut(newWound, wound, intscPoint1, intscPoint2);
+                    else
+                    {
+                        tree.GetComponent<MeshFilter>().mesh = initMesh;
+                        tree.GetComponent<MeshRenderer>().enabled = true;
+                    }
+                }
+            }
         }
 
         void Cut(Wound wound1, Wound wound2, Vector3 intscPoint1, Vector3 intscPoint2)
@@ -111,7 +150,9 @@ public class Chopper : MonoBehaviour
                     trianglesIndex[2],trianglesIndex[3],trianglesIndex[4],
                     trianglesIndex[2],trianglesIndex[4],trianglesIndex[5]
                 };
+
             resMesh.triangles = resTriangles;
+            initMesh = tree.GetComponent<MeshFilter>().mesh;
 
             var cutter = new GameObject("cutter");
             cutter.AddComponent<MeshFilter>().mesh = resMesh;
@@ -147,9 +188,10 @@ public class Chopper : MonoBehaviour
             subtracted.transform.position += tree.transform.position;
 
             subtracted.GetComponent<Transform>().localScale = new Vector3(0.9f, 0.9f, 0.9f);
-            subtracted.AddComponent<Rigidbody>();
+            //subtracted.AddComponent<Rigidbody>();
             subtracted.AddComponent<MeshCollider>().convex = true;
             subtracted.AddComponent<Chopper>().tree = subtracted;
+            instatiatedPieces[0] = subtracted;
 
             Destroy(cutter);
 
@@ -218,7 +260,8 @@ public class Chopper : MonoBehaviour
             result1 = CSG.Subtract(tree, lowerhalfTree);
 
 
-            Destroy(tree);
+            //Destroy(tree);
+            tree.GetComponent<MeshRenderer>().enabled = false;
             Destroy(kutter);
 
             var upperhalfTree = new GameObject("upperhalfOfTree");
@@ -235,33 +278,41 @@ public class Chopper : MonoBehaviour
 
             upperhalfTree.transform.position = lowerhalfTree.transform.position;
             
-            tree.transform.position = Vector3.zero;
+            //tree.transform.position = Vector3.zero;
 
-            upperhalfTree.AddComponent<Rigidbody>();
+            //upperhalfTree.AddComponent<Rigidbody>();
             upperhalfTree.AddComponent<MeshCollider>().convex = true;
-            lowerhalfTree.AddComponent<Rigidbody>();
+            //lowerhalfTree.AddComponent<Rigidbody>();
             lowerhalfTree.AddComponent<MeshCollider>().convex = true;
 
             float volumeUpper = BreakingPhysics.VolumeOfMesh(upperhalfTree);
             float volumeLower = BreakingPhysics.VolumeOfMesh(lowerhalfTree);
-            upperhalfTree.GetComponent<Rigidbody>().mass = volumeUpper * treeDensity;
-            lowerhalfTree.GetComponent<Rigidbody>().mass = volumeLower * treeDensity;
+            //upperhalfTree.GetComponent<Rigidbody>().mass = volumeUpper * treeDensity;
+            //lowerhalfTree.GetComponent<Rigidbody>().mass = volumeLower * treeDensity;
 
             float sqr = BreakingPhysics.Area(sqrtThing);
             Destroy(sqrtThing);
-            BreakingPhysics.setComponentFixedJoint(upperhalfTree, lowerhalfTree, sqr*300);
+            //BreakingPhysics.setComponentFixedJoint(upperhalfTree, lowerhalfTree, sqr*300);
 
             lowerhalfTree.AddComponent<Chopper>().tree = lowerhalfTree;
             upperhalfTree.AddComponent<Chopper>().tree = upperhalfTree;
+
+            tree.GetComponent<MeshFilter>().mesh = initMesh;
+
+            instatiatedPieces[1] = lowerhalfTree;
+            instatiatedPieces[2] = upperhalfTree;
         }
     }
 
     // Start is called before the first frame update
     void Start()
     {
-        Chopable choppable = new Chopable(tree);
-        choppable.GetNewWound(wound1);
-        choppable.GetNewWound(wound2);
+        choppable = new Chopable(tree);
+        if (OnStart)
+        {
+            choppable.GetNewWound(wound1);
+            choppable.GetNewWound(wound2);
+        }
         Debug.Log("nice");
         Debug.Log("nice");
     }
@@ -279,4 +330,20 @@ public class Chopper : MonoBehaviour
  
     }
 
+    public void ActivateCutting(GameObject button)
+    {
+        foreach (var piece in instatiatedPieces)
+        {
+            Destroy(piece);
+        }
+        Button buttonScript = button.GetComponent<Button>();
+        if (!OnStart)
+        {
+            buttonScript.interactable = false;
+            choppable.TwoWoundCut(wound1, wound2);
+            buttonScript.interactable = true;
+        }
+    }
 }
+
+
