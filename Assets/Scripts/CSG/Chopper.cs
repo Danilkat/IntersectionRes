@@ -106,7 +106,8 @@ public class Chopper : MonoBehaviour
 
         void Cut(Wound wound1, Wound wound2, Vector3 intscPoint1, Vector3 intscPoint2)
         {
-            
+            Debug.Log($"Точки пересечения: {intscPoint1.ToString("F12")}, {intscPoint2.ToString("F12")}");
+
             if (Vector3.Distance(wound1.quad.points[0], intscPoint1) < Vector3.Distance(wound1.quad.points[0], intscPoint2))
             {
                 Vector3 temp = intscPoint1;
@@ -192,6 +193,8 @@ public class Chopper : MonoBehaviour
             subtracted.AddComponent<MeshCollider>().convex = true;
             subtracted.AddComponent<Chopper>().tree = subtracted;
             instatiatedPieces[0] = subtracted;
+            GameObject newww = Instantiate(tree);
+            newww.transform.position = tree.transform.position;
 
             Destroy(cutter);
 
@@ -204,6 +207,7 @@ public class Chopper : MonoBehaviour
             Vector3 lhsPos = wound2.wound.transform.up;
 
             Vector3 V = (intscPoint1 + intscPoint2)/2.0f;
+            Debug.Log($"V: {V.ToString("F12")}");
             var kutter = new GameObject("kkk");
             kutter.AddComponent<MeshFilter>().mesh = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
             kutter.AddComponent<MeshRenderer>().material = new Material(Shader.Find("Standard"));
@@ -213,6 +217,11 @@ public class Chopper : MonoBehaviour
             kutter.transform.right = Vector3.Cross(rhsPos, lhsPos);
             kutter.transform.forward = (intscPoint1 - V).normalized;
             kutter.transform.Rotate(Vector3.right, -90);
+            Vector3 buff = kutter.transform.position;
+            buff.x = (float)System.Math.Round(buff.x, 3);
+            buff.y = (float)System.Math.Round(buff.y, 3);
+            buff.z = (float)System.Math.Round(buff.z, 3);
+            kutter.transform.position = buff;
 
             var cube = new GameObject("smolCube");
             cube.AddComponent<MeshFilter>().mesh = Resources.GetBuiltinResource<Mesh>("Cube.fbx");

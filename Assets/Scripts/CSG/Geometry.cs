@@ -1,4 +1,4 @@
-using System.Collections;
+п»їusing System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -18,7 +18,7 @@ public class Geometry : MonoBehaviour
 
         Vector3 res = new Vector3(0.0001f, 0, 0);
 
-        
+
         public Quadrangle(Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p4)
         {
             points = new Vector3[4]; points[0] = p1; points[1] = p2; points[2] = p3; points[3] = p4;
@@ -26,7 +26,7 @@ public class Geometry : MonoBehaviour
             minmaxX.x = p1.x; minmaxX.y = p1.x;
             minmaxY.x = p1.y; minmaxY.y = p1.y;
             minmaxZ.x = p1.z; minmaxZ.y = p1.z;
-            //////minmaxX.x = min x,    minmaxX.y = max x, minmaxX.z = расстояние 
+            //////minmaxX.x = min x,    minmaxX.y = max x, minmaxX.z = пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ 
             foreach (Vector3 p in points)
             {
                 minmaxX.x = minmaxX.x > p.x ? p.x : minmaxX.x;
@@ -45,7 +45,7 @@ public class Geometry : MonoBehaviour
                 minmaxZ.z = Mathf.Abs(minmaxZ.y - minmaxZ.x);
             }
 
-            if ((minmaxX.z>=minmaxY.z)&&(minmaxX.z>=minmaxZ.z))
+            if ((minmaxX.z >= minmaxY.z) && (minmaxX.z >= minmaxZ.z))
             {
                 i = 0; j = 1; k = 2; calcVariable[i].y = minmaxX.y; calcVariable[i].z = minmaxX.x;
             }
@@ -72,7 +72,7 @@ public class Geometry : MonoBehaviour
 
         bool InBetween(Vector3 p)
         {
-            if ((minmaxX.x <= p.x) && (p.x <= minmaxX.y) && (minmaxY.x <= p.y) && (p.y <= minmaxY.y) && (minmaxZ.x <= p.z) && (p.z <= minmaxZ.y))
+            if ((p.x - minmaxX.x > res.x) && (minmaxX.y - p.x > res.x) && (p.y - minmaxY.x > res.x) && (minmaxY.y - p.y > res.x) && (p.z - minmaxZ.x > res.x) && (minmaxZ.y - p.z > res.x))
             {
                 return true;
             }
@@ -82,7 +82,7 @@ public class Geometry : MonoBehaviour
         public Vector3 Intersection(Quadrangle q2, bool direct, ref bool intsc)
         {
             bool flag = true;
-            calcVariable[3].x = Mathf.Abs(calcVariable[i].y - calcVariable[i].z) / 1000;
+            calcVariable[3].x = Mathf.Abs(calcVariable[i].y - calcVariable[i].z) / 10000;
 
             if (direct)
             {
@@ -90,7 +90,7 @@ public class Geometry : MonoBehaviour
                 calcVariable[k].x = ((q2.plane[j].x / plane[j].x) * (plane[i].x * calcVariable[i].x + plane[3].x) - q2.plane[i].x * calcVariable[i].x - q2.plane[3].x) / (q2.plane[k].x - plane[k].x * q2.plane[j].x / plane[j].x);
                 calcVariable[j].x = (-plane[k].x * calcVariable[k].x - plane[i].x * calcVariable[i].x - plane[3].x) / plane[j].x;
 
-                while (InBetween(calc) && flag)
+                do
                 {
                     calcVariable[i].x -= calcVariable[3].x;
                     calcVariable[k].x = ((q2.plane[j].x / plane[j].x) * (plane[i].x * calcVariable[i].x + plane[3].x) - q2.plane[i].x * calcVariable[i].x - q2.plane[3].x) / (q2.plane[k].x - plane[k].x * q2.plane[j].x / plane[j].x);
@@ -98,7 +98,7 @@ public class Geometry : MonoBehaviour
 
                     res.y = plane[0].x * calcVariable[i].x + plane[1].x * calcVariable[j].x + plane[2].x * calcVariable[k].x + plane[3].x - (q2.plane[i].x * calcVariable[i].x + q2.plane[j].x * calcVariable[j].x + q2.plane[k].x * calcVariable[k].x + q2.plane[3].x);
                     if ((res.y < res.x) && (q2.InBetween(calc))) flag = false;
-                }
+                } while (InBetween(calc) && flag);
             }
             else
             {
@@ -106,7 +106,7 @@ public class Geometry : MonoBehaviour
                 calcVariable[k].x = ((q2.plane[j].x / plane[j].x) * (plane[i].x * calcVariable[i].x + plane[3].x) - q2.plane[i].x * calcVariable[i].x - q2.plane[3].x) / (q2.plane[k].x - plane[k].x * q2.plane[j].x / plane[j].x);
                 calcVariable[j].x = (-plane[k].x * calcVariable[k].x - plane[i].x * calcVariable[i].x - plane[3].x) / plane[j].x;
 
-                while (InBetween(calc) && flag)
+                do
                 {
                     calcVariable[i].x += calcVariable[3].x;
                     calcVariable[k].x = ((q2.plane[j].x / plane[j].x) * (plane[i].x * calcVariable[i].x + plane[3].x) - q2.plane[i].x * calcVariable[i].x - q2.plane[3].x) / (q2.plane[k].x - plane[k].x * q2.plane[j].x / plane[j].x);
@@ -114,7 +114,7 @@ public class Geometry : MonoBehaviour
 
                     res.y = plane[i].x * calcVariable[i].x + plane[j].x * calcVariable[j].x + plane[k].x * calcVariable[k].x + plane[3].x - (q2.plane[i].x * calcVariable[i].x + q2.plane[j].x * calcVariable[j].x + q2.plane[k].x * calcVariable[k].x + q2.plane[3].x);
                     if ((res.y < res.x) && (q2.InBetween(calc))) flag = false;
-                }
+                } while (InBetween(calc) && flag);
             }
 
             calc.x = calcVariable[0].x;
@@ -150,12 +150,12 @@ public class Geometry : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+
     }
 }
